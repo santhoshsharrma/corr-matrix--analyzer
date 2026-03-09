@@ -1123,22 +1123,111 @@ function processFile(file) {
   reader.readAsText(file);
 }
 
-function parseCSV(text, name = 'dataset') {
-  const lines = text.trim().split('\n').filter(l => l.trim());
-  headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
-  rawData = [];
-  for (let i = 1; i < lines.length; i++) {
-    const row = lines[i].split(',').map(v => parseFloat(v.trim()));
-    if (row.every(v => !isNaN(v))) rawData.push(row);
+function splitCSVLine(line, delim) {
+  const result = [];
+  let cur = '', inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if ((ch === '"' || ch === "'") && !inQuote) { inQuote = ch; continue; }
+    if (ch === inQuote) { inQuote = false; continue; }
+    if (ch === delim && !inQuote) { result.push(cur.trim()); cur = ''; continue; }
+    cur += ch;
   }
-  if (rawData.length < 2 || headers.length < 2) {
-    tLog('ERROR: CSV must have ≥2 numeric features and ≥2 rows.', 'err');
+  result.push(cur.trim());
+  return result;
+}
+
+function isMissing(v) {
+  const s = String(v).trim().toLowerCase();
+  return !s || s === 'na' || s === 'n/a' || s === 'nan' || s === 'null' ||
+         s === 'none' || s === '-' || s === '?' || s === '#n/a' || s === 'missing' || s === '.';
+}
+
+function parseCSV(text, name = 'dataset') {
+  tLog('Parsing CSV...', 'dim');
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n')
+    .split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+
+  if (lines.length < 2) { tLog('ERROR: File needs at least 2 rows (header + data).', 'err'); return; }
+
+  // Auto-detect delimiter
+  const first = lines[0];
+  const counts = {
+    ',':  (first.match(/,/g)||[]).length,
+    ';':  (first.match(/;/g)||[]).length,
+    '\t': (first.match(/\t/g)||[]).length,
+    '|':  (first.match(/\|/g)||[]).length
+  };
+  const delim = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+  if (delim !== ',') tLog('Auto-detected delimiter: ' + (delim === '\t' ? 'TAB' : delim), 'dim');
+
+  const allHeaders = splitCSVLine(lines[0], delim)
+    .map((h,i) => h.replace(/["\']/g,'').trim() || ('col_'+i));
+
+  const allRows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const row = splitCSVLine(lines[i], delim);
+    while (row.length < allHeaders.length) row.push('');
+    allRows.push(row);
+  }
+
+  if (allRows.length === 0) { tLog('ERROR: No data rows found after header.', 'err'); return; }
+  tLog('Found ' + allRows.length + ' rows, ' + allHeaders.length + ' columns.', 'dim');
+
+  // Detect numeric columns (>=50% numeric values)
+  const numericColIdx = [];
+  for (let j = 0; j < allHeaders.length; j++) {
+    const nonMissing = allRows.map(r => r[j]).filter(v => !isMissing(v));
+    const numCount = nonMissing.filter(v => !isNaN(parseFloat(String(v).replace(/,/g,'.'))) && isFinite(v)).length;
+    if (nonMissing.length > 0 && numCount / nonMissing.length >= 0.5) numericColIdx.push(j);
+  }
+
+  const skippedColNames = allHeaders.filter((_,j) => !numericColIdx.includes(j));
+  if (skippedColNames.length > 0) tLog('Auto-skipped non-numeric columns: ' + skippedColNames.join(', '), 'warn');
+
+  if (numericColIdx.length < 2) {
+    tLog('ERROR: Found fewer than 2 numeric columns.', 'err');
+    tLog('TIP: Remove text/ID/category columns and re-upload.', 'warn');
     return;
   }
-  tLog(`Parsed: ${rawData.length} rows × ${headers.length} features`, 'bright');
-  animateProgress().then(() => {
-    computeAndRender(name);
+
+  headers = numericColIdx.map(j => allHeaders[j]);
+  rawData = [];
+  let skippedRows = 0, imputedCells = 0;
+
+  for (let i = 0; i < allRows.length; i++) {
+    const row = numericColIdx.map(j => {
+      const v = allRows[i][j];
+      if (isMissing(v)) return NaN;
+      const num = parseFloat(String(v).replace(/,/g,'.'));
+      return isNaN(num) ? NaN : num;
+    });
+    if (row.every(v => isNaN(v))) { skippedRows++; continue; }
+    rawData.push(row);
+  }
+
+  // Impute missing with column mean
+  const colMeans = headers.map((_, j) => {
+    const vals = rawData.map(r => r[j]).filter(v => !isNaN(v));
+    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
   });
+  rawData = rawData.map(row => row.map((v, j) => {
+    if (isNaN(v)) { imputedCells++; return colMeans[j]; }
+    return v;
+  }));
+
+  if (skippedRows > 0) tLog('Skipped ' + skippedRows + ' fully-empty row(s).', 'warn');
+  if (imputedCells > 0) tLog('Imputed ' + imputedCells + ' missing value(s) with column mean.', 'warn');
+
+  if (rawData.length < 2) {
+    tLog('ERROR: Not enough valid rows. Fix blank/invalid rows in your CSV.', 'err');
+    return;
+  }
+
+  tLog('Parsed: ' + rawData.length + ' rows x ' + headers.length + ' numeric features', 'bright');
+  tLog('Features: ' + headers.join(', '), 'dim');
+  animateProgress().then(() => computeAndRender(name));
 }
 
 async function animateProgress() {
