@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CORR_MATRIX // Statistical Analyzer v1.0</title>
+<title>CORRLY // Statistical Analyzer v1.1</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
 
@@ -98,7 +98,7 @@
     to { width: 100%; }
   }
 
-  /* ---- LAYOUT ---- */
+ /* LAYOUT */
   #app {
     min-height: 100vh;
     display: flex;
@@ -106,7 +106,7 @@
     animation: flicker 8s infinite;
   }
 
-  /* ---- HEADER ---- */
+  /* HEADER */
   header {
     border-bottom: 1px solid var(--border-bright);
     padding: 14px 28px;
@@ -148,7 +148,7 @@
     box-shadow: 0 0 6px var(--green);
   }
 
-  /* ---- MAIN ---- */
+  /* MAIN */
   main {
     flex: 1;
     padding: 28px;
@@ -160,7 +160,7 @@
     gap: 22px;
   }
 
-  /* ---- TERMINAL PANEL ---- */
+  /* TERMINAL PANEL */
   .panel {
     border: 1px solid var(--border);
     background: var(--panel);
@@ -195,7 +195,7 @@
 
   .panel-body { padding: 18px 20px; }
 
-  /* ---- TERMINAL OUTPUT ---- */
+  /* TERMINAL OUTPUT */
   #terminal-output {
     min-height: 90px;
     max-height: 220px;
@@ -218,7 +218,7 @@
   .t-text.warn { color: #ffdd57; }
   .t-text.err { color: #ff4f4f; }
 
-  /* ---- INPUT LINE ---- */
+  /* INPUT LINE */
   .input-line {
     display: flex;
     align-items: center;
@@ -257,7 +257,7 @@
     box-shadow: 0 0 8px var(--green);
   }
 
-  /* ---- UPLOAD ZONE ---- */
+  /* UPLOAD ZONE */
   #upload-zone {
     border: 1px dashed var(--border-bright);
     border-radius: 2px;
@@ -291,7 +291,7 @@
 
   #file-input { display: none; }
 
-  /* ---- BTN ---- */
+  /* BTN */
   .btn {
     background: transparent;
     border: 1px solid var(--green-dim);
@@ -328,7 +328,7 @@
 
   .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
 
-  /* ---- STATS GRID ---- */
+  /* STATS GRID */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -371,7 +371,7 @@
     margin-top: 4px;
   }
 
-  /* ---- HEATMAP ---- */
+  /* HEATMAP */
   #heatmap-container {
     overflow-x: auto;
     padding-bottom: 8px;
@@ -451,7 +451,7 @@
   }
   .hm-cell:hover .tooltip { display: block; }
 
-  /* ---- COLORBAR ---- */
+  /* COLOR-BAR */
   .colorbar-wrap {
     display: flex;
     align-items: center;
@@ -471,7 +471,7 @@
     );
   }
 
-  /* ---- PAIRS TABLE ---- */
+  /* PAIRS TABLE */
   .pairs-table {
     width: 100%;
     border-collapse: collapse;
@@ -514,7 +514,7 @@
   .badge.pos { background: rgba(0,255,65,0.12); color: #80ff9e; border: 1px solid rgba(0,255,65,0.3); }
   .badge.neg { background: rgba(255,80,80,0.1); color: #ff8080; border: 1px solid rgba(255,80,80,0.3); }
 
-  /* ---- SUMMARY ---- */
+  /* SUMMARY */
   .summary-box {
     border-left: 2px solid var(--green-dim);
     padding: 14px 18px;
@@ -528,7 +528,7 @@
   .summary-box .line { animation: fadeIn 0.4s ease both; }
   .summary-box .highlight { color: var(--green); font-weight: bold; text-shadow: 0 0 6px rgba(0,255,65,0.4); }
 
-  /* ---- SECTION TITLE ---- */
+  /* SECTION TITLE */
   .section-tag {
     font-family: var(--font-vt);
     font-size: 1.05rem;
@@ -547,10 +547,10 @@
     background: var(--border);
   }
 
-  /* ---- HIDDEN ---- */
+  /* HIDDEN */
   .hidden { display: none !important; }
 
-  /* ---- SAMPLE DATA BTN ---- */
+  /* SAMPLE DATA BTN */
   .sample-link {
     display: inline-block;
     font-size: 0.72rem;
@@ -563,7 +563,7 @@
   }
   .sample-link:hover { color: var(--green); }
 
-  /* ---- FOOTER ---- */
+  /* FOOTER */
   footer {
     border-top: 1px solid var(--border);
     padding: 12px 28px;
@@ -574,7 +574,7 @@
     letter-spacing: 1px;
   }
 
-  /* ---- PROGRESS BAR ---- */
+  /* PROGRESS BAR */
   .progress-bar {
     height: 2px;
     background: var(--border);
@@ -597,7 +597,7 @@
     .logo { font-size: 1.4rem; }
   }
 
-  /* ---- AI CHAT ---- */
+  /* AI CHAT */
   #ai-chat-panel { margin-top: 0; }
 
   #ai-chat-panel .panel-title-tag {
